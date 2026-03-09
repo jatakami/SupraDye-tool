@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lam Chem | SupraDye Impact Calculator V17</title>
+    <title>Lam Chem | SupraDye Impact Calculator V18</title>
     <style>
         :root {
             --primary: #2C3E50; 
@@ -101,14 +101,20 @@
         .input-panel .report-header { display: none; } 
 
         .comparison-row { display: flex; gap: 15px; }
-        .comp-card { flex: 1; background: var(--card-bg); padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .comp-card { flex: 1; background: var(--card-bg); padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; }
         .comp-card.old { border-top: 4px solid var(--accent); }
         .comp-card.new { border-top: 4px solid var(--sustainability); }
         .comp-card h3 { margin: 0 0 10px 0; font-size: 18px; }
         .cost-display { font-size: 32px; font-weight: bold; margin: 10px 0; }
         .old .cost-display { color: var(--accent); }
         .new .cost-display { color: var(--sustainability); }
-        .per-kg-display { font-size: 14px; font-weight: 600; color: #7f8c8d; margin-top: 5px; background: #f4f7f6; padding: 5px; border-radius: 4px; display: inline-block; }
+        
+        .cost-breakdown { background: #f9f9f9; border-radius: 6px; padding: 10px; margin: 10px 0; text-align: left; font-size: 13px; color: #555; border: 1px dashed #ddd; }
+        .cost-breakdown div { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .cost-breakdown div:last-child { margin-bottom: 0; }
+        .cost-breakdown span { font-weight: bold; color: var(--primary); }
+        
+        .per-kg-display { font-size: 14px; font-weight: 600; color: #7f8c8d; margin-top: 5px; background: #f4f7f6; padding: 5px; border-radius: 4px; display: inline-block; align-self: center; }
         
         .savings-banner { background: linear-gradient(135deg, var(--sustainability), #219653); color: white; padding: 25px; border-radius: 12px; text-align: center; box-shadow: 0 6px 12px rgba(39, 174, 96, 0.2); transition: background 0.3s; }
         .savings-banner h2 { margin: 0; font-size: 36px; }
@@ -122,14 +128,13 @@
         .esg-per-kg { font-size: 11px; color: #95a5a6; font-weight: normal; margin-top: 4px; display: block; }
         .pct-badge { position: absolute; top: 8px; right: 8px; background: #e8f8f5; color: #27ae60; padding: 3px 6px; border-radius: 12px; font-size: 11px; font-weight: bold; border: 1px solid #27ae60;}
 
-        /* --- PRINT STYLING ENGINE (V17 UPGRADES) --- */
+        /* --- PRINT STYLING ENGINE --- */
         @media print {
             @page { margin: 15mm; size: portrait; }
             body { background: white; padding: 0; }
             .header { display: none !important; }
             .container { flex-direction: column; display: block; max-width: 100%; width: 100%; }
             
-            /* Apply global Anti-Cutoff shield */
             .recipe-box, .recipe-sub, .utility-rates, .param-box, .line-item, .comp-card, .esg-card, .savings-banner { 
                 page-break-inside: avoid; 
                 break-inside: avoid; 
@@ -157,7 +162,6 @@
             body.print-detailed details { background: transparent; border: none; padding: 0;}
             body.print-detailed summary { display: none; }
             
-            /* Force exact vertical stacking for print to prevent horizontal overflow */
             body.print-detailed .recipe-container { display: flex !important; flex-direction: column !important; gap: 20px; width: 100%; }
             body.print-detailed .utility-container { display: flex !important; flex-direction: column !important; gap: 20px; width: 100%; }
             body.print-detailed .process-params { display: flex !important; flex-direction: column !important; gap: 20px; width: 100%; }
@@ -166,7 +170,6 @@
             body.print-detailed .recipe-sub { padding: 5px; background: transparent; border: none; margin-bottom: 10px;}
             body.print-detailed .recipe-sub h5 { border-bottom: 1px solid #000; color: #000; }
             
-            /* Inputs to text formatting */
             body.print-detailed input[type="number"], 
             body.print-detailed input[type="text"] { border: none !important; background: transparent !important; color: #000 !important; font-weight: bold; padding: 0; margin: 0; appearance: none; -moz-appearance: textfield;}
             body.print-detailed .item-name { text-align: left !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -425,12 +428,24 @@
                 <h3>Conventional Method</h3>
                 <div class="cost-display">$<span id="totalOld">0.00</span></div>
                 <div style="font-size: 14px; font-weight: bold; color: #555;">Total Batch Cost</div>
+                
+                <div class="cost-breakdown">
+                    <div><span>Utilities:</span> $<span id="oldUtilCostDisplay">0.00</span></div>
+                    <div><span>Recipe:</span> $<span id="oldChemCostDisplay">0.00</span></div>
+                </div>
+                
                 <div class="per-kg-display">$<span id="oldPerKg">0.00</span> / kg of fabric</div>
             </div>
             <div class="comp-card new">
                 <h3>SupraDye™ Process</h3>
                 <div class="cost-display">$<span id="totalNew">0.00</span></div>
                 <div style="font-size: 14px; font-weight: bold; color: #555;">Total Batch Cost</div>
+                
+                <div class="cost-breakdown">
+                    <div><span>Utilities:</span> $<span id="newUtilCostDisplay">0.00</span></div>
+                    <div><span>Recipe:</span> $<span id="newChemCostDisplay">0.00</span></div>
+                </div>
+
                 <div class="per-kg-display">$<span id="newPerKg">0.00</span> / kg of fabric</div>
             </div>
         </div>
@@ -759,13 +774,22 @@
         const oldTime = parseFloat(document.getElementById('oldTime').value) || 0;
         const newTime = parseFloat(document.getElementById('newTime').value) || 0;
 
-        const oldTotalCost = oldWaterCost + oldSteamCost + oldElecCost + oldChemCost;
-        const newTotalCost = newWaterCost + newSteamCost + newElecCost + newChemCost;
+        // Utilities Breakdown Subtotals
+        const oldUtilCost = oldWaterCost + oldSteamCost + oldElecCost;
+        const newUtilCost = newWaterCost + newSteamCost + newElecCost;
+
+        const oldTotalCost = oldUtilCost + oldChemCost;
+        const newTotalCost = newUtilCost + newChemCost;
         const totalSavings = oldTotalCost - newTotalCost;
 
         document.getElementById('totalOld').innerText = oldTotalCost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('oldUtilCostDisplay').innerText = oldUtilCost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('oldChemCostDisplay').innerText = oldChemCost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         document.getElementById('oldPerKg').innerText = (oldTotalCost / batchSize).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        
         document.getElementById('totalNew').innerText = newTotalCost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('newUtilCostDisplay').innerText = newUtilCost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('newChemCostDisplay').innerText = newChemCost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         document.getElementById('newPerKg').innerText = (newTotalCost / batchSize).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
         
         const savingsEl = document.getElementById('totalSavings');
