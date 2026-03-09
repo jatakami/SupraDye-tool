@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lam Chem | SupraDye Impact Calculator V17</title>
+    <style>
+        :root {
+            --primary: #2C3E50; 
+            --sustainability: #27AE60; 
+            --accent: #E74C3C; 
+            --bg: #F8F9FA;
+            --card-bg: #FFFFFF;
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg); color: #333; margin: 0; padding: 20px; }
+        .header { text-align: center; padding: 20px; background: var(--primary); color: white; border-radius: 12px; margin-bottom: 20px; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .header p { margin: 5px 0 0 0; color: #BDC3C7; font-size: 14px; }
+        
+        .container { display: flex; flex-wrap: wrap; gap: 20px; max-width: 1400px; margin: 0 auto; }
+        
+        .input-panel { flex: 1.2; min-width: 500px; background: var(--card-bg); padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-top: 4px solid var(--primary); }
+        
+        /* Save/Load Controls */
+        .save-controls { display: flex; gap: 10px; background: #e8ebed; padding: 15px; border-radius: 8px; margin-bottom: 20px; align-items: center; border: 1px solid #d5dbdb;}
+        .save-controls select { flex: 2; padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-weight: bold; color: var(--primary);}
+        .btn-save { background: #3498db; color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s; flex: 1;}
+        .btn-save:hover { background: #2980b9; }
+        .btn-delete { background: #95a5a6; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s;}
+        .btn-delete:hover { background: #7f8c8d; }
+
+        .input-group { margin-bottom: 12px; }
+        .input-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 12px; color: #555; }
+        .input-group input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; background: #fdfdfd; }
+        .section-title { margin-top: 25px; margin-bottom: 15px; padding-bottom: 5px; border-bottom: 2px solid #eee; color: var(--primary); font-size: 16px; font-weight: bold;}
+        
+        .flex-row { display: flex; gap: 15px; align-items: flex-start;}
+        .flex-row > div { flex: 1; }
+        
+        /* Recipe Builder Styles */
+        details { background: #f0f4f8; border-radius: 8px; padding: 15px; margin-top: 20px; border: 1px solid #dce4ec; }
+        summary { font-weight: bold; color: var(--primary); cursor: pointer; outline: none; padding: 5px 0; font-size: 15px;}
+        summary::-webkit-details-marker { display: none; }
+        summary { list-style: none; }
+        
+        .recipe-container { display: flex; flex-direction: column; gap: 20px; margin-top: 15px;}
+        .recipe-box { background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; }
+        .recipe-box.old { border-top: 4px solid var(--accent); }
+        .recipe-box.new { border-top: 4px solid var(--sustainability); }
+        .recipe-box h4 { margin: 0 0 15px 0; font-size: 18px;}
+
+        /* Subsections for Dyes & Chems */
+        .recipe-sub { margin-bottom: 20px; padding: 15px; background: #fcfcfc; border: 1px solid #eee; border-radius: 8px;}
+        .recipe-sub h5 { margin: 0 0 10px 0; color: var(--primary); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #ddd; padding-bottom: 5px;}
+        
+        .col-header { display: flex; gap: 10px; font-size: 11px; font-weight: 700; color: #7f8c8d; text-transform: uppercase; padding: 0 10px; margin-bottom: 5px; }
+        .ch-name { flex: 3; min-width: 150px; }
+        .ch-dose { flex: 1; min-width: 80px; text-align: center;}
+        .ch-price { flex: 1; min-width: 80px; text-align: center;}
+        .ch-action { width: 35px; } 
+        
+        .line-item { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 6px; border: 1px dashed #ccc;}
+        .line-item input { padding: 8px; font-size: 13px; border: 1px solid #ccc; border-radius: 4px;}
+        .item-name { flex: 3; min-width: 150px; }
+        .item-dose { flex: 1; min-width: 80px; text-align: center;}
+        .item-price { flex: 1; min-width: 80px; text-align: center;}
+        .btn-remove { background: #e74c3c; color: white; border: none; border-radius: 4px; padding: 8px 12px; cursor: pointer; font-weight: bold; font-size: 12px; width: 35px;}
+        .btn-remove:hover { background: #c0392b; }
+        
+        .btn-add { background: #ecf0f1; border: 1px solid #bdc3c7; color: #2c3e50; padding: 8px 15px; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; margin-top: 5px; transition: 0.2s;}
+        .btn-add:hover { background: #d5dbdb; }
+
+        .recipe-total { text-align: right; font-weight: bold; color: var(--primary); margin-top: 15px; padding-top: 15px; border-top: 2px solid #eee; font-size: 16px;}
+
+        /* Advanced Utilities UI Refactor */
+        .utility-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px; }
+        .utility-rates { background: #ffffff; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; margin-top: 0;}
+        .utility-rates h5 { margin: 0 0 10px 0; color: var(--primary); font-size: 14px; text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 5px;}
+        .rate-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 15px; }
+
+        .process-params { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .param-box { background: #ffffff; padding: 15px; border-radius: 8px; border: 1px solid #ddd; }
+        .param-box.old { border-top: 3px solid var(--accent); }
+        .param-box.new { border-top: 3px solid var(--sustainability); }
+        .param-box h5 { margin: 0 0 15px 0; font-size: 15px; color: var(--primary);}
+        
+        .btn-apply { background: var(--primary); color: white; border: none; padding: 14px; width: 100%; border-radius: 6px; font-weight: bold; margin-top: 20px; cursor: pointer; font-size: 16px; transition: 0.2s;}
+        .btn-apply:hover { background: #1a252f; }
+        
+        .pdf-controls { display: flex; gap: 10px; margin-top: 10px; }
+        .btn-pdf { background: #8E44AD; color: white; border: none; padding: 14px; flex: 1; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 15px; transition: 0.2s;}
+        .btn-pdf.detailed { background: #732D91; }
+        .btn-pdf:hover { opacity: 0.9; }
+
+        .dashboard { flex: 1; min-width: 400px; display: flex; flex-direction: column; gap: 20px; }
+        
+        /* Report Header Base Styles */
+        .report-header { display: none; margin-bottom: 20px; border-bottom: 2px solid var(--primary); padding-bottom: 10px;}
+        .report-header h2 { margin: 0; color: var(--primary); }
+        .report-header p { margin: 5px 0 0 0; color: #666; font-size: 14px;}
+        .input-panel .report-header { display: none; } 
+
+        .comparison-row { display: flex; gap: 15px; }
+        .comp-card { flex: 1; background: var(--card-bg); padding: 20px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .comp-card.old { border-top: 4px solid var(--accent); }
+        .comp-card.new { border-top: 4px solid var(--sustainability); }
+        .comp-card h3 { margin: 0 0 10px 0; font-size: 18px; }
+        .cost-display { font-size: 32px; font-weight: bold; margin: 10px 0; }
+        .old .cost-display { color: var(--accent); }
+        .new .cost-display { color: var(--sustainability); }
+        .per-kg-display { font-size: 14px; font-weight: 600; color: #7f8c8d; margin-top: 5px; background: #f4f7f6; padding: 5px; border-radius: 4px; display: inline-block; }
+        
+        .savings-banner { background: linear-gradient(135deg, var(--sustainability), #219653); color: white; padding: 25px; border-radius: 12px; text-align: center; box-shadow: 0 6px 12px rgba(39, 174, 96, 0.2); transition: background 0.3s; }
+        .savings-banner h2 { margin: 0; font-size: 36px; }
+        .savings-banner p { margin: 5px 0 0 0; font-size: 16px; opacity: 0.9; }
+
+        .esg-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; }
+        .esg-card { background: var(--card-bg); padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #e1e8ed; position: relative;}
+        .esg-card .icon { font-size: 26px; margin-bottom: 5px; }
+        .esg-card .value { font-size: 20px; font-weight: bold; color: var(--primary); }
+        .esg-card .label { font-size: 11px; color: #7f8c8d; font-weight: bold; text-transform: uppercase; margin-top: 5px; }
+        .esg-per-kg { font-size: 11px; color: #95a5a6; font-weight: normal; margin-top: 4px; display: block; }
+        .pct-badge { position: absolute; top: 8px; right: 8px; background: #e8f8f5; color: #27ae60; padding: 3px 6px; border-radius: 12px; font-size: 11px; font-weight: bold; border: 1px solid #27ae60;}
+
+        /* --- PRINT STYLING ENGINE (V17 UPGRADES) --- */
+        @media print {
+            @page { margin: 15mm; size: portrait; }
+            body { background: white; padding: 0; }
+            .header { display: none !important; }
+            .container { flex-direction: column; display: block; max-width: 100%; width: 100%; }
+            
+            /* Apply global Anti-Cutoff shield */
+            .recipe-box, .recipe-sub, .utility-rates, .param-box, .line-item, .comp-card, .esg-card, .savings-banner { 
+                page-break-inside: avoid; 
+                break-inside: avoid; 
+            }
+
+            .dashboard { width: 100%; display: block; page-break-after: always; }
+            .comp-card, .esg-card, .savings-banner { box-shadow: none; border: 1px solid #ddd; margin-bottom: 20px;}
+            .esg-grid { display: flex; gap: 10px; flex-wrap: wrap;}
+            .esg-card { flex: 1; min-width: 120px; padding: 15px;}
+
+            body:not(.print-detailed) .input-panel { display: none !important; }
+            body:not(.print-detailed) .dashboard .report-header { display: block; } 
+
+            body.print-detailed .dashboard .report-header { display: none; } 
+            body.print-detailed .input-panel .report-header { display: block; margin-bottom: 20px; border-bottom: 2px solid var(--primary); padding-bottom: 10px;} 
+
+            body.print-detailed .input-panel { display: block !important; width: 100%; border: none; padding: 0; box-shadow: none; margin-top: 20px;}
+            
+            body.print-detailed .save-controls, 
+            body.print-detailed .btn-apply, 
+            body.print-detailed .pdf-controls, 
+            body.print-detailed .btn-add, 
+            body.print-detailed .btn-remove { display: none !important; }
+            
+            body.print-detailed details { background: transparent; border: none; padding: 0;}
+            body.print-detailed summary { display: none; }
+            
+            /* Force exact vertical stacking for print to prevent horizontal overflow */
+            body.print-detailed .recipe-container { display: flex !important; flex-direction: column !important; gap: 20px; width: 100%; }
+            body.print-detailed .utility-container { display: flex !important; flex-direction: column !important; gap: 20px; width: 100%; }
+            body.print-detailed .process-params { display: flex !important; flex-direction: column !important; gap: 20px; width: 100%; }
+            
+            body.print-detailed .recipe-box, body.print-detailed .param-box, body.print-detailed .utility-rates { padding: 15px; width: 100%; box-sizing: border-box;}
+            body.print-detailed .recipe-sub { padding: 5px; background: transparent; border: none; margin-bottom: 10px;}
+            body.print-detailed .recipe-sub h5 { border-bottom: 1px solid #000; color: #000; }
+            
+            /* Inputs to text formatting */
+            body.print-detailed input[type="number"], 
+            body.print-detailed input[type="text"] { border: none !important; background: transparent !important; color: #000 !important; font-weight: bold; padding: 0; margin: 0; appearance: none; -moz-appearance: textfield;}
+            body.print-detailed .item-name { text-align: left !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+            body.print-detailed .item-dose, body.print-detailed .item-price { text-align: center !important; }
+            body.print-detailed input::-webkit-outer-spin-button,
+            body.print-detailed input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+            
+            body.print-detailed .line-item { background: transparent; border: none; border-bottom: 1px dashed #ccc; padding: 4px 0;}
+            body.print-detailed .col-header { color: #000; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Lam Chem | SupraDye™ Impact Calculator</h1>
+    <p>Total Cost of Ownership & ESG Supply Chain Analysis</p>
+</div>
+
+<div class="container">
+    <div class="input-panel">
+        
+        <div class="report-header">
+            <h2>Lam Chem | ESG & TCO Impact Report</h2>
+            <h3 style="margin: 5px 0 0 0; color: #7f8c8d; font-size: 16px;">Detailed Formulations & Parameters Appendix</h3>
+            <p><strong>Prepared For:</strong> <span class="repCustomer">XYZ Fashion</span></p>
+            <p><strong>Color/Recipe:</strong> <span class="repColor">Deep Black 85</span> | <strong>Fabric:</strong> <span class="repFabric">60% Cotton / 40% Polyester</span></p>
+            <p><strong>Batch Volume:</strong> <span class="repBatch">1000</span> kg</p>
+        </div>
+
+        <div class="save-controls">
+            <select id="profileSelect" onchange="loadProfile()">
+                <option value="">-- Load a Saved Profile --</option>
+            </select>
+            <button type="button" class="btn-save" onclick="saveProfile()">💾 Save Profile</button>
+            <button type="button" class="btn-delete" onclick="deleteProfile()" title="Delete selected profile">🗑️</button>
+        </div>
+
+        <div class="section-title">📝 Report Profile</div>
+        <div class="flex-row">
+            <div class="input-group">
+                <label>Customer / Vendor Name</label>
+                <input type="text" id="custName" placeholder="e.g., FKL" oninput="updateReportHeaders()">
+            </div>
+            <div class="input-group">
+                <label>Color / Recipe Reference</label>
+                <input type="text" id="colorName" placeholder="e.g., H&M Black 09-090" oninput="updateReportHeaders()">
+            </div>
+        </div>
+
+        <div class="section-title">🏭 Production & Fabric</div>
+        <div class="flex-row">
+            <div class="input-group">
+                <label>Batch Size (kg)</label>
+                <input type="number" id="batchSize" value="1000" oninput="calculateImpact()">
+            </div>
+            <div class="input-group"><label>Cellulose/Cotton %</label><input type="number" id="cottonPct" value="60" oninput="autoAdjustFabric('cotton')"></div>
+            <div class="input-group"><label>Polyester %</label><input type="number" id="polyPct" value="40" oninput="autoAdjustFabric('poly')"></div>
+        </div>
+
+        <div class="section-title">🧪 Recipe Costing Engine</div>
+        <details>
+            <summary>⚙️ Dyes & Auxiliaries Recipe</summary>
+            
+            <div class="recipe-container">
+                <div class="recipe-box old">
+                    <h4 style="color: var(--accent);">Conventional Recipe</h4>
+                    
+                    <div class="recipe-sub">
+                        <h5>Reactive Dyes</h5>
+                        <div class="col-header"><div class="ch-name">Product Name</div><div class="ch-dose">Dose (% owf)</div><div class="ch-price">Price ($/kg)</div><div class="ch-action"></div></div>
+                        <div id="conv-react-container"></div>
+                        <button type="button" class="btn-add" onclick="addDyeRow('conv', 'react')">+ Add Reactive Dye</button>
+                    </div>
+
+                    <div class="recipe-sub">
+                        <h5>Disperse Dyes</h5>
+                        <div class="col-header"><div class="ch-name">Product Name</div><div class="ch-dose">Dose (% owf)</div><div class="ch-price">Price ($/kg)</div><div class="ch-action"></div></div>
+                        <div id="conv-disp-container"></div>
+                        <button type="button" class="btn-add" onclick="addDyeRow('conv', 'disp')">+ Add Disperse Dye</button>
+                    </div>
+
+                    <div class="recipe-sub">
+                        <h5>Auxiliary Chemicals</h5>
+                        <div class="col-header"><div class="ch-name">Product Name</div><div class="ch-dose">Dose (g/L)</div><div class="ch-price">Price ($/kg)</div><div class="ch-action"></div></div>
+                        <div id="conv-chem-container"></div>
+                        <button type="button" class="btn-add" onclick="addChemRow('conv')">+ Add Auxiliary (g/L)</button>
+                    </div>
+                    
+                    <div class="recipe-total">Total Recipe Cost: $<span id="conv-chem-total">0.00</span></div>
+                </div>
+
+                <div class="recipe-box new">
+                    <h4 style="color: var(--sustainability);">SupraDye™ Recipe</h4>
+                    
+                    <div class="recipe-sub">
+                        <h5>Reactive Dyes</h5>
+                        <div class="col-header"><div class="ch-name">Product Name</div><div class="ch-dose">Dose (% owf)</div><div class="ch-price">Price ($/kg)</div><div class="ch-action"></div></div>
+                        <div id="supra-react-container"></div>
+                        <button type="button" class="btn-add" onclick="addDyeRow('supra', 'react')">+ Add Reactive Dye</button>
+                    </div>
+
+                    <div class="recipe-sub">
+                        <h5>Disperse Dyes</h5>
+                        <div class="col-header"><div class="ch-name">Product Name</div><div class="ch-dose">Dose (% owf)</div><div class="ch-price">Price ($/kg)</div><div class="ch-action"></div></div>
+                        <div id="supra-disp-container"></div>
+                        <button type="button" class="btn-add" onclick="addDyeRow('supra', 'disp')">+ Add Disperse Dye</button>
+                    </div>
+
+                    <div class="recipe-sub">
+                        <h5>Auxiliary Chemicals</h5>
+                        <div class="col-header"><div class="ch-name">Product Name</div><div class="ch-dose">Dose (g/L)</div><div class="ch-price">Price ($/kg)</div><div class="ch-action"></div></div>
+                        <div id="supra-chem-container"></div>
+                        <button type="button" class="btn-add" onclick="addChemRow('supra')">+ Add Auxiliary (g/L)</button>
+                    </div>
+                    
+                    <div class="recipe-total">Total Recipe Cost: $<span id="supra-chem-total">0.00</span></div>
+                </div>
+
+            </div>
+        </details>
+
+        <details open>
+            <summary>⚙️ Advanced Utility Parameters</summary>
+            
+            <div class="utility-container">
+                <div class="utility-rates">
+                    <h5>Utility Rates</h5>
+                    <div class="rate-grid">
+                        <div class="input-group">
+                            <label>Fresh Water ($/m³)</label>
+                            <input type="number" id="waterCost" value="0.60" step="0.05" oninput="calculateImpact()">
+                        </div>
+                        <div class="input-group">
+                            <label>ETP Treatment ($/m³)</label>
+                            <input type="number" id="etpCost" value="0.40" step="0.05" oninput="calculateImpact()">
+                        </div>
+                        <div class="input-group">
+                            <label>Steam Rate ($/ton)</label>
+                            <input type="number" id="steamCost" value="30.00" step="1.00" oninput="calculateImpact()">
+                        </div>
+                        <div class="input-group">
+                            <label>Electricity ($/kWh)</label>
+                            <input type="number" id="elecCost" value="0.12" step="0.01" oninput="calculateImpact()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="utility-rates" style="border-color: #1abc9c; background-color: #f4fcfa;">
+                    <h5 style="color: #16a085;">Emission Factors (UNFCCC)</h5>
+                    <div class="rate-grid">
+                        <div class="input-group">
+                            <label>Scope 1: Steam (kg CO2/kg)</label>
+                            <input type="number" id="efSteam" value="0.20" step="0.01" oninput="calculateImpact()">
+                        </div>
+                        <div class="input-group">
+                            <label>Scope 2: Grid (kg CO2/kWh)</label>
+                            <input type="number" id="efElec" value="0.50" step="0.01" oninput="calculateImpact()">
+                        </div>
+                        <div class="input-group">
+                            <label>Scope 3: Water Supply (kg/m³)</label>
+                            <input type="number" id="efWaterSupply" value="0.149" step="0.001" oninput="calculateImpact()">
+                        </div>
+                        <div class="input-group">
+                            <label>Scope 3: ETP Treatment (kg/m³)</label>
+                            <input type="number" id="efWaterEtp" value="0.272" step="0.001" oninput="calculateImpact()">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="process-params">
+                <div class="param-box old">
+                    <h5>Conventional Base Process</h5>
+                    <div class="input-group">
+                        <label>Bath Parameters</label>
+                        <div style="display: flex; gap: 10px; font-size: 10px; font-weight: bold; color: #aaa; margin-bottom: 3px;">
+                            <div style="flex:1;">Phase</div>
+                            <div style="width: 75px; text-align: center;">Liquor Ratio</div>
+                            <div style="width: 60px; text-align: center;">Cycles</div>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-bottom: 5px;">
+                            <div style="flex:1; font-size: 12px; color: #555; align-self: center; font-weight: bold;">Dyeing</div>
+                            <input type="number" id="oldDyeBath" value="8" oninput="calculateImpact()" style="width: 75px; text-align: right;">
+                            <input type="number" id="oldDyeCycles" value="1" oninput="calculateImpact()" style="width: 60px; text-align: right;">
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-bottom: 5px;">
+                            <div style="flex:1; font-size: 12px; color: #555; align-self: center; font-weight: bold;">Soaping</div>
+                            <input type="number" id="oldSoapBath" value="8" oninput="calculateImpact()" style="width: 75px; text-align: right;">
+                            <input type="number" id="oldSoapCycles" value="3" oninput="calculateImpact()" style="width: 60px; text-align: right;">
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <div style="flex:1; font-size: 12px; color: #555; align-self: center; font-weight: bold;">Rinsing</div>
+                            <input type="number" id="oldRinseBath" value="10" oninput="calculateImpact()" style="width: 75px; text-align: right;">
+                            <input type="number" id="oldRinseCycles" value="4" oninput="calculateImpact()" style="width: 60px; text-align: right;">
+                        </div>
+                    </div>
+
+                    <div class="input-group"><label>Steam (kg per kg fabric)</label><input type="number" id="oldSteam" value="4.5" step="0.1" oninput="calculateImpact()"></div>
+                    <div class="input-group"><label>Electricity (kWh per kg fabric)</label><input type="number" id="oldElec" value="0.45" step="0.05" oninput="calculateImpact()"></div>
+                    <div class="input-group"><label>Total Process Time (Hrs)</label><input type="number" id="oldTime" value="15" step="0.5" oninput="calculateImpact()"></div>
+                </div>
+                
+                <div class="param-box new">
+                    <h5>SupraDye™ Process</h5>
+                    <div class="input-group">
+                        <label>Bath Parameters</label>
+                        <div style="display: flex; gap: 10px; font-size: 10px; font-weight: bold; color: #aaa; margin-bottom: 3px;">
+                            <div style="flex:1;">Phase</div>
+                            <div style="width: 75px; text-align: center;">Liquor Ratio</div>
+                            <div style="width: 60px; text-align: center;">Cycles</div>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-bottom: 5px;">
+                            <div style="flex:1; font-size: 12px; color: #555; align-self: center; font-weight: bold;">Dyeing</div>
+                            <input type="number" id="newDyeBath" value="8" oninput="calculateImpact()" style="width: 75px; text-align: right;">
+                            <input type="number" id="newDyeCycles" value="1" oninput="calculateImpact()" style="width: 60px; text-align: right;">
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-bottom: 5px;">
+                            <div style="flex:1; font-size: 12px; color: #555; align-self: center; font-weight: bold;">Soaping</div>
+                            <input type="number" id="newSoapBath" value="8" oninput="calculateImpact()" style="width: 75px; text-align: right;">
+                            <input type="number" id="newSoapCycles" value="2" oninput="calculateImpact()" style="width: 60px; text-align: right;">
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <div style="flex:1; font-size: 12px; color: #555; align-self: center; font-weight: bold;">Rinsing</div>
+                            <input type="number" id="newRinseBath" value="8" oninput="calculateImpact()" style="width: 75px; text-align: right;">
+                            <input type="number" id="newRinseCycles" value="2" oninput="calculateImpact()" style="width: 60px; text-align: right;">
+                        </div>
+                    </div>
+
+                    <div class="input-group"><label>Steam (kg per kg fabric)</label><input type="number" id="newSteam" value="2.0" step="0.1" oninput="calculateImpact()"></div>
+                    <div class="input-group"><label>Electricity (kWh per kg fabric)</label><input type="number" id="newElec" value="0.25" step="0.05" oninput="calculateImpact()"></div>
+                    <div class="input-group"><label>Total Process Time (Hrs)</label><input type="number" id="newTime" value="7" step="0.5" oninput="calculateImpact()"></div>
+                </div>
+            </div>
+        </details>
+        
+        <button type="button" class="btn-apply" onclick="calculateImpact()">♻️ Calculate Impact Report</button>
+        
+        <div class="pdf-controls">
+            <button type="button" class="btn-pdf" onclick="generateReport('summary')">📄 Export Summary PDF</button>
+            <button type="button" class="btn-pdf detailed" onclick="generateReport('detailed')">📄 Export Detailed PDF</button>
+        </div>
+
+    </div>
+
+    <div class="dashboard">
+        <div class="report-header">
+            <h2>Lam Chem | ESG & TCO Impact Report</h2>
+            <p><strong>Prepared For:</strong> <span class="repCustomer">XYZ Fashion</span></p>
+            <p><strong>Color/Recipe:</strong> <span class="repColor">Deep Black 85</span> | <strong>Fabric:</strong> <span class="repFabric">60% Cotton / 40% Polyester</span></p>
+            <p><strong>Batch Volume:</strong> <span class="repBatch">1000</span> kg</p>
+        </div>
+
+        <div class="comparison-row">
+            <div class="comp-card old">
+                <h3>Conventional Method</h3>
+                <div class="cost-display">$<span id="totalOld">0.00</span></div>
+                <div style="font-size: 14px; font-weight: bold; color: #555;">Total Batch Cost</div>
+                <div class="per-kg-display">$<span id="oldPerKg">0.00</span> / kg of fabric</div>
+            </div>
+            <div class="comp-card new">
+                <h3>SupraDye™ Process</h3>
+                <div class="cost-display">$<span id="totalNew">0.00</span></div>
+                <div style="font-size: 14px; font-weight: bold; color: #555;">Total Batch Cost</div>
+                <div class="per-kg-display">$<span id="newPerKg">0.00</span> / kg of fabric</div>
+            </div>
+        </div>
+
+        <div class="savings-banner" id="bannerBox">
+            <h2 id="totalSavings">$0.00</h2>
+            <p>Net Financial Savings per Batch</p>
+        </div>
+
+        <h3 style="margin: 10px 0 0 0; color: var(--primary);">🌍 Environmental Impact (Per Batch)</h3>
+        <div class="esg-grid">
+            <div class="esg-card">
+                <div class="pct-badge" id="waterPct">-0%</div>
+                <div class="icon">💧</div><div class="value" id="waterSaved">0</div><div class="label">Liters Water Saved</div>
+                <div class="esg-per-kg" id="waterPerKg">0 L / kg</div>
+            </div>
+            <div class="esg-card">
+                <div class="pct-badge" id="steamPct">-0%</div>
+                <div class="icon">♨️</div><div class="value" id="steamSaved">0</div><div class="label">kg Steam Saved</div>
+                <div class="esg-per-kg" id="steamPerKg">0 kg / kg</div>
+            </div>
+            <div class="esg-card">
+                <div class="pct-badge" id="elecPct">-0%</div>
+                <div class="icon">⚡</div><div class="value" id="elecSaved">0</div><div class="label">kWh Power Saved</div>
+                <div class="esg-per-kg" id="elecPerKg">0 kWh / kg</div>
+            </div>
+            <div class="esg-card">
+                <div class="pct-badge" id="timePct">-0%</div>
+                <div class="icon">⏱️</div><div class="value" id="timeSaved">0</div><div class="label">Hours Saved</div>
+            </div>
+            <div class="esg-card" style="grid-column: 1 / -1; background: #fdf2e9; border-color: #e67e22;">
+                <div class="pct-badge" id="ghgPct" style="background: white; color: #d35400; border-color: #d35400;">-0%</div>
+                <div class="icon">☁️</div><div class="value" id="ghgSaved" style="color: #d35400;">0</div>
+                <div class="label" style="font-size: 12px; color: #d35400; line-height: 1.4;">
+                    <strong>GREENHOUSE GAS EMISSIONS</strong><br>
+                    <span style="font-weight: normal;">Total kg CO2e Avoided</span><br>
+                    <span style="font-size: 9px; opacity: 0.8; font-weight: normal;">(Includes UNFCCC Scopes 1, 2 & 3)</span>
+                </div>
+                <div class="esg-per-kg" id="ghgPerKg" style="color: #e67e22; margin-top: 8px;">0 kg CO2e / kg</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function createRemoveBtn(elem) {
+        elem.parentNode.remove();
+        calculateImpact();
+    }
+
+    function addDyeRow(type, category, name = '', dose = '', price = '') {
+        const container = document.getElementById(`${type}-${category}-container`);
+        const row = document.createElement('div');
+        row.className = `line-item dye-row-${type}`;
+        row.innerHTML = `
+            <input type="text" class="item-name" placeholder="Product Name" value="${name}">
+            <input type="number" class="item-dose" placeholder="%" step="0.01" value="${dose}" oninput="calculateImpact()">
+            <input type="number" class="item-price" placeholder="$/kg" step="0.01" value="${price}" oninput="calculateImpact()">
+            <button type="button" class="btn-remove" onclick="createRemoveBtn(this)">X</button>
+        `;
+        container.appendChild(row);
+    }
+
+    function addChemRow(type, name = '', dose = '', price = '') {
+        const container = document.getElementById(`${type}-chem-container`);
+        const row = document.createElement('div');
+        row.className = `line-item chem-row-${type}`;
+        row.innerHTML = `
+            <input type="text" class="item-name" placeholder="Product Name" value="${name}">
+            <input type="number" class="item-dose" placeholder="g/L" step="0.1" value="${dose}" oninput="calculateImpact()">
+            <input type="number" class="item-price" placeholder="$/kg" step="0.01" value="${price}" oninput="calculateImpact()">
+            <button type="button" class="btn-remove" onclick="createRemoveBtn(this)">X</button>
+        `;
+        container.appendChild(row);
+    }
+
+    function updateProfileDropdown() {
+        const select = document.getElementById('profileSelect');
+        select.innerHTML = '<option value="">-- Load a Saved Profile --</option>';
+        const savedProfiles = JSON.parse(localStorage.getItem('supraDyeProfiles')) || {};
+        
+        Object.keys(savedProfiles).forEach(profileName => {
+            const opt = document.createElement('option');
+            opt.value = profileName;
+            opt.textContent = profileName;
+            select.appendChild(opt);
+        });
+    }
+
+    function saveProfile() {
+        const custName = document.getElementById('custName').value.trim();
+        const colorName = document.getElementById('colorName').value.trim();
+        
+        if(!custName || !colorName) {
+            alert("⚠️ Please enter both a Customer Name and Color/Recipe Reference before saving.");
+            return;
+        }
+        
+        const profileName = `${custName} - ${colorName}`;
+        
+        const profileData = {
+            inputs: {},
+            recipes: { conv: { react: [], disp: [], chem: [] }, supra: { react: [], disp: [], chem: [] } }
+        };
+
+        const inputIds = [
+            'custName', 'colorName', 'batchSize', 'cottonPct', 'polyPct', 
+            'waterCost', 'etpCost', 'steamCost', 'elecCost',
+            'efSteam', 'efElec', 'efWaterSupply', 'efWaterEtp', 
+            'oldDyeBath', 'oldDyeCycles', 'oldSoapBath', 'oldSoapCycles', 'oldRinseBath', 'oldRinseCycles', 'oldSteam', 'oldElec', 'oldTime', 
+            'newDyeBath', 'newDyeCycles', 'newSoapBath', 'newSoapCycles', 'newRinseBath', 'newRinseCycles', 'newSteam', 'newElec', 'newTime'
+        ];
+        
+        inputIds.forEach(id => {
+            profileData.inputs[id] = document.getElementById(id).value;
+        });
+
+        const saveRows = (type, category, containerId) => {
+            const rows = document.querySelectorAll(`#${containerId} .line-item`);
+            rows.forEach(row => {
+                const name = row.querySelector('.item-name').value;
+                const dose = row.querySelector('.item-dose').value;
+                const price = row.querySelector('.item-price').value;
+                profileData.recipes[type][category].push({name, dose, price});
+            });
+        };
+
+        saveRows('conv', 'react', 'conv-react-container');
+        saveRows('conv', 'disp', 'conv-disp-container');
+        saveRows('conv', 'chem', 'conv-chem-container');
+        saveRows('supra', 'react', 'supra-react-container');
+        saveRows('supra', 'disp', 'supra-disp-container');
+        saveRows('supra', 'chem', 'supra-chem-container');
+
+        let savedProfiles = JSON.parse(localStorage.getItem('supraDyeProfiles')) || {};
+        savedProfiles[profileName] = profileData;
+        localStorage.setItem('supraDyeProfiles', JSON.stringify(savedProfiles));
+
+        updateProfileDropdown();
+        document.getElementById('profileSelect').value = profileName;
+        alert(`✅ Profile "${profileName}" saved successfully!`);
+    }
+
+    function loadProfile() {
+        const profileName = document.getElementById('profileSelect').value;
+        if(!profileName) return;
+
+        const savedProfiles = JSON.parse(localStorage.getItem('supraDyeProfiles')) || {};
+        const data = savedProfiles[profileName];
+        if(!data) return;
+
+        Object.keys(data.inputs).forEach(id => {
+            if(document.getElementById(id)) {
+                document.getElementById(id).value = data.inputs[id];
+            }
+        });
+
+        document.getElementById('conv-react-container').innerHTML = '';
+        document.getElementById('conv-disp-container').innerHTML = '';
+        document.getElementById('conv-chem-container').innerHTML = '';
+        document.getElementById('supra-react-container').innerHTML = '';
+        document.getElementById('supra-disp-container').innerHTML = '';
+        document.getElementById('supra-chem-container').innerHTML = '';
+
+        const loadRows = (type, category, arr) => {
+            arr.forEach(item => {
+                if(category === 'chem') {
+                    addChemRow(type, item.name, item.dose, item.price);
+                } else {
+                    addDyeRow(type, category, item.name, item.dose, item.price);
+                }
+            });
+        };
+
+        loadRows('conv', 'react', data.recipes.conv.react);
+        loadRows('conv', 'disp', data.recipes.conv.disp);
+        loadRows('conv', 'chem', data.recipes.conv.chem);
+        loadRows('supra', 'react', data.recipes.supra.react);
+        loadRows('supra', 'disp', data.recipes.supra.disp);
+        loadRows('supra', 'chem', data.recipes.supra.chem);
+
+        calculateImpact();
+    }
+
+    function deleteProfile() {
+        const profileName = document.getElementById('profileSelect').value;
+        if(!profileName) {
+            alert("Please select a profile to delete.");
+            return;
+        }
+        
+        if(confirm(`Are you sure you want to delete the saved profile for "${profileName}"?`)) {
+            let savedProfiles = JSON.parse(localStorage.getItem('supraDyeProfiles')) || {};
+            delete savedProfiles[profileName];
+            localStorage.setItem('supraDyeProfiles', JSON.stringify(savedProfiles));
+            updateProfileDropdown();
+        }
+    }
+
+    function generateReport(type) {
+        if(type === 'detailed') {
+            document.body.classList.add('print-detailed');
+            document.querySelectorAll('details').forEach(d => d.setAttribute('open', 'true'));
+        } else {
+            document.body.classList.remove('print-detailed');
+        }
+        
+        window.print();
+        
+        document.body.classList.remove('print-detailed');
+    }
+
+    window.onload = function() {
+        updateProfileDropdown();
+        
+        addDyeRow('conv', 'react', 'Standard Reactive Black', '5.2', '2.00');
+        addDyeRow('conv', 'disp', 'Standard Disperse Red', '1.7', '1.00');
+        addChemRow('conv', 'Leveling Agent', '1.5', '0.45');
+        
+        addDyeRow('supra', 'react', 'SupraDye CO Black CBK 85', '5.0', '2.50');
+        addDyeRow('supra', 'react', 'SupraDye CO Red CRd 83', '0.2', '2.80');
+        addDyeRow('supra', 'disp', 'SupraDye PET Red PRd 93', '0.5', '1.20');
+        addDyeRow('supra', 'disp', 'SupraDye PET Black PBk 95', '1.2', '1.20');
+        addChemRow('supra', 'Leveling Agent', '1.0', '0.55');
+
+        autoAdjustFabric('cotton');
+        calculateImpact();
+    };
+
+    function autoAdjustFabric(changed) {
+        let cotton = parseFloat(document.getElementById('cottonPct').value) || 0;
+        let poly = parseFloat(document.getElementById('polyPct').value) || 0;
+        if (changed === 'cotton') { document.getElementById('polyPct').value = Math.max(0, 100 - cotton); } 
+        else { document.getElementById('cottonPct').value = Math.max(0, 100 - poly); }
+        updateReportHeaders();
+    }
+
+    function updateReportHeaders() {
+        const cust = document.getElementById('custName').value || 'Generic Calculation';
+        const color = document.getElementById('colorName').value || 'Standard Shade';
+        const fabric = `${document.getElementById('cottonPct').value}% Cellulose / ${document.getElementById('polyPct').value}% Polyester`;
+        const batch = document.getElementById('batchSize').value;
+
+        document.querySelectorAll('.repCustomer').forEach(el => el.innerText = cust);
+        document.querySelectorAll('.repColor').forEach(el => el.innerText = color);
+        document.querySelectorAll('.repFabric').forEach(el => el.innerText = fabric);
+        document.querySelectorAll('.repBatch').forEach(el => el.innerText = batch);
+    }
+
+    function calcRecipeCost(type, batchSize, dyeBathVolumeLiters) {
+        let totalCost = 0;
+        
+        const dyes = document.querySelectorAll(`.dye-row-${type}`);
+        dyes.forEach(row => {
+            const dosePct = parseFloat(row.querySelector('.item-dose').value) || 0;
+            const price = parseFloat(row.querySelector('.item-price').value) || 0;
+            const kgNeeded = batchSize * (dosePct / 100);
+            totalCost += (kgNeeded * price);
+        });
+
+        const chems = document.querySelectorAll(`.chem-row-${type}`);
+        chems.forEach(row => {
+            const doseGL = parseFloat(row.querySelector('.item-dose').value) || 0;
+            const price = parseFloat(row.querySelector('.item-price').value) || 0;
+            const kgNeeded = dyeBathVolumeLiters * (doseGL / 1000);
+            totalCost += (kgNeeded * price);
+        });
+
+        document.getElementById(`${type}-chem-total`).innerText = totalCost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        return totalCost;
+    }
+
+    function calculateImpact() {
+        updateReportHeaders();
+        
+        const batchSize = parseFloat(document.getElementById('batchSize').value) || 1; 
+        
+        const waterRate = parseFloat(document.getElementById('waterCost').value) || 0; 
+        const etpRate = parseFloat(document.getElementById('etpCost').value) || 0; 
+        const totalWaterPricePerM3 = waterRate + etpRate; 
+
+        const steamRate = parseFloat(document.getElementById('steamCost').value) || 0; 
+        const elecRate = parseFloat(document.getElementById('elecCost').value) || 0; 
+
+        const efSteam = parseFloat(document.getElementById('efSteam').value) || 0;
+        const efElec = parseFloat(document.getElementById('efElec').value) || 0;
+        const efWaterSupply = parseFloat(document.getElementById('efWaterSupply').value) || 0;
+        const efWaterEtp = parseFloat(document.getElementById('efWaterEtp').value) || 0;
+
+        const oldDyeBath = parseFloat(document.getElementById('oldDyeBath').value) || 0;
+        const oldDyeCycles = parseFloat(document.getElementById('oldDyeCycles').value) || 0;
+        const oldSoapBath = parseFloat(document.getElementById('oldSoapBath').value) || 0;
+        const oldSoapCycles = parseFloat(document.getElementById('oldSoapCycles').value) || 0;
+        const oldRinseBath = parseFloat(document.getElementById('oldRinseBath').value) || 0;
+        const oldRinseCycles = parseFloat(document.getElementById('oldRinseCycles').value) || 0;
+
+        const newDyeBath = parseFloat(document.getElementById('newDyeBath').value) || 0;
+        const newDyeCycles = parseFloat(document.getElementById('newDyeCycles').value) || 0;
+        const newSoapBath = parseFloat(document.getElementById('newSoapBath').value) || 0;
+        const newSoapCycles = parseFloat(document.getElementById('newSoapCycles').value) || 0;
+        const newRinseBath = parseFloat(document.getElementById('newRinseBath').value) || 0;
+        const newRinseCycles = parseFloat(document.getElementById('newRinseCycles').value) || 0;
+        
+        const oldDyeVol = batchSize * oldDyeBath;
+        const newDyeVol = batchSize * newDyeBath;
+
+        const oldChemCost = calcRecipeCost('conv', batchSize, oldDyeVol);
+        const newChemCost = calcRecipeCost('supra', batchSize, newDyeVol);
+
+        const oldWaterLiters = (oldDyeVol * oldDyeCycles) + (batchSize * oldSoapBath * oldSoapCycles) + (batchSize * oldRinseBath * oldRinseCycles);
+        const newWaterLiters = (newDyeVol * newDyeCycles) + (batchSize * newSoapBath * newSoapCycles) + (batchSize * newRinseBath * newRinseCycles);
+        
+        const oldWaterCost = (oldWaterLiters / 1000) * totalWaterPricePerM3;
+        const newWaterCost = (newWaterLiters / 1000) * totalWaterPricePerM3;
+
+        const oldSteamKg = batchSize * (parseFloat(document.getElementById('oldSteam').value) || 0);
+        const newSteamKg = batchSize * (parseFloat(document.getElementById('newSteam').value) || 0);
+        const oldSteamCost = (oldSteamKg / 1000) * steamRate;
+        const newSteamCost = (newSteamKg / 1000) * steamRate;
+
+        const oldElecKwh = batchSize * (parseFloat(document.getElementById('oldElec').value) || 0);
+        const newElecKwh = batchSize * (parseFloat(document.getElementById('newElec').value) || 0);
+        const oldElecCost = oldElecKwh * elecRate;
+        const newElecCost = newElecKwh * elecRate;
+
+        const oldTime = parseFloat(document.getElementById('oldTime').value) || 0;
+        const newTime = parseFloat(document.getElementById('newTime').value) || 0;
+
+        const oldTotalCost = oldWaterCost + oldSteamCost + oldElecCost + oldChemCost;
+        const newTotalCost = newWaterCost + newSteamCost + newElecCost + newChemCost;
+        const totalSavings = oldTotalCost - newTotalCost;
+
+        document.getElementById('totalOld').innerText = oldTotalCost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('oldPerKg').innerText = (oldTotalCost / batchSize).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('totalNew').innerText = newTotalCost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('newPerKg').innerText = (newTotalCost / batchSize).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        
+        const savingsEl = document.getElementById('totalSavings');
+        const banner = document.getElementById('bannerBox');
+        if (totalSavings >= 0) {
+            savingsEl.innerText = "+ $" + totalSavings.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            banner.style.background = "linear-gradient(135deg, var(--sustainability), #219653)";
+        } else {
+            savingsEl.innerText = "- $" + Math.abs(totalSavings).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            banner.style.background = "linear-gradient(135deg, var(--accent), #C0392B)";
+        }
+
+        const waterSaved = oldWaterLiters - newWaterLiters;
+        const steamSaved = oldSteamKg - newSteamKg;
+        const elecSaved = oldElecKwh - newElecKwh;
+        const timeSaved = oldTime - newTime;
+        
+        const oldGhg = (oldSteamKg * efSteam) + (oldElecKwh * efElec) + ((oldWaterLiters / 1000) * (efWaterSupply + efWaterEtp)); 
+        const newGhg = (newSteamKg * efSteam) + (newElecKwh * efElec) + ((newWaterLiters / 1000) * (efWaterSupply + efWaterEtp));
+        const ghgSaved = oldGhg - newGhg;
+
+        document.getElementById('waterSaved').innerText = waterSaved.toLocaleString();
+        document.getElementById('steamSaved').innerText = steamSaved.toLocaleString();
+        document.getElementById('elecSaved').innerText = elecSaved.toLocaleString();
+        document.getElementById('timeSaved').innerText = timeSaved.toFixed(1);
+        document.getElementById('ghgSaved').innerText = ghgSaved.toFixed(0);
+
+        document.getElementById('waterPerKg').innerText = (waterSaved / batchSize).toFixed(1) + " L / kg";
+        document.getElementById('steamPerKg').innerText = (steamSaved / batchSize).toFixed(2) + " kg / kg";
+        document.getElementById('elecPerKg').innerText = (elecSaved / batchSize).toFixed(2) + " kWh / kg";
+        document.getElementById('ghgPerKg').innerText = (ghgSaved / batchSize).toFixed(2) + " kg CO2e / kg";
+
+        document.getElementById('waterPct').innerText = oldWaterLiters ? "-" + Math.round((waterSaved / oldWaterLiters) * 100) + "%" : "0%";
+        document.getElementById('steamPct').innerText = oldSteamKg ? "-" + Math.round((steamSaved / oldSteamKg) * 100) + "%" : "0%";
+        document.getElementById('elecPct').innerText = oldElecKwh ? "-" + Math.round((elecSaved / oldElecKwh) * 100) + "%" : "0%";
+        document.getElementById('timePct').innerText = oldTime ? "-" + Math.round((timeSaved / oldTime) * 100) + "%" : "0%";
+        document.getElementById('ghgPct').innerText = oldGhg ? "-" + Math.round((ghgSaved / oldGhg) * 100) + "%" : "0%";
+    }
+</script>
+</body>
+</html>
