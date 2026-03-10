@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lam Chem | SupraDye Impact Calculator V20</title>
+    <title>Lam Chem | SupraDye Impact Calculator V21</title>
     <style>
         :root {
             --primary: #2C3E50; 
@@ -73,6 +73,8 @@
         .btn-add:hover { background: #d5dbdb; }
 
         .recipe-total { text-align: right; font-weight: bold; color: var(--primary); margin-top: 15px; padding-top: 15px; border-top: 2px solid #eee; font-size: 16px;}
+        .flat-total { display: flex; justify-content: flex-end; align-items: center; gap: 8px; border-top: none; margin-top: 0; padding-top: 0;}
+        .flat-total input { width: 100px; font-size: 16px; font-weight: bold; color: var(--primary); text-align: left; padding: 6px; border: 1px solid #ccc; border-radius: 4px;}
 
         /* Advanced Utilities UI Refactor */
         .utility-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px; }
@@ -112,10 +114,12 @@
         .old .cost-display { color: var(--accent); }
         .new .cost-display { color: var(--sustainability); }
         
+        /* Fixed Cost Breakdown Alignment */
         .cost-breakdown { background: #f9f9f9; border-radius: 6px; padding: 10px; margin: 10px 0; text-align: left; font-size: 13px; color: #555; border: 1px dashed #ddd; }
         .cost-breakdown div { display: flex; justify-content: space-between; margin-bottom: 4px; }
         .cost-breakdown div:last-child { margin-bottom: 0; }
-        .cost-breakdown span { font-weight: bold; color: var(--primary); }
+        .cb-label { color: #555; }
+        .cb-val { font-weight: bold; color: var(--primary); display: inline-block; min-width: 70px; text-align: right; }
         
         .per-kg-display { font-size: 14px; font-weight: 600; color: #7f8c8d; margin-top: 5px; background: #f4f7f6; padding: 5px; border-radius: 4px; display: inline-block; align-self: center; }
         
@@ -183,7 +187,8 @@
             body.print-detailed details, body.print-confidential details { background: transparent; border: none; padding: 0;}
             body.print-detailed summary, body.print-confidential summary { display: none; }
             
-            body.print-detailed .recipe-container, body.print-confidential .recipe-container,
+            /* Apply column layout, strictly without forcing display visibility tags! */
+            body.print-detailed .recipe-container, body.print-confidential .recipe-container { flex-direction: column !important; gap: 20px; width: 100%; }
             body.print-detailed .utility-container, body.print-confidential .utility-container,
             body.print-detailed .process-params, body.print-confidential .process-params { display: flex !important; flex-direction: column !important; gap: 20px; width: 100%; }
             
@@ -210,6 +215,7 @@
             /* --- CONFIDENTIAL OVERRIDES --- */
             body.print-confidential .recipe-sub { display: none !important; }
             body.print-confidential .recipe-total { border-top: none; padding-top: 0; font-size: 18px; color: #000;}
+            body.print-confidential .flat-total input { text-align: left !important; width: auto !important;}
         }
     </style>
 </head>
@@ -329,21 +335,15 @@
             <div id="flatRecipeWrapper" class="recipe-container" style="display: none;">
                 <div class="recipe-box old">
                     <h4 style="color: var(--accent);">Conventional Recipe</h4>
-                    <div class="input-group">
-                        <label>Total Recipe Cost ($ per batch):</label>
-                        <div style="font-size: 18px; font-weight: bold; color: var(--primary); display: flex; align-items: center; gap: 5px;">
-                            $ <input type="number" id="flatConvCost" value="0.00" step="0.01" oninput="calculateImpact()" style="font-size: 18px; max-width: 150px; text-align: left;">
-                        </div>
+                    <div class="recipe-total flat-total">
+                        Total Recipe Cost: $ <input type="number" id="flatConvCost" value="0.00" step="0.01" oninput="calculateImpact()">
                     </div>
                 </div>
 
                 <div class="recipe-box new">
                     <h4 style="color: var(--sustainability);">SupraDye™ Recipe</h4>
-                    <div class="input-group">
-                        <label>Total Recipe Cost ($ per batch):</label>
-                        <div style="font-size: 18px; font-weight: bold; color: var(--primary); display: flex; align-items: center; gap: 5px;">
-                            $ <input type="number" id="flatSupraCost" value="0.00" step="0.01" oninput="calculateImpact()" style="font-size: 18px; max-width: 150px; text-align: left;">
-                        </div>
+                    <div class="recipe-total flat-total">
+                        Total Recipe Cost: $ <input type="number" id="flatSupraCost" value="0.00" step="0.01" oninput="calculateImpact()">
                     </div>
                 </div>
             </div>
@@ -489,8 +489,8 @@
                 <div style="font-size: 14px; font-weight: bold; color: #555;">Total Batch Cost</div>
                 
                 <div class="cost-breakdown">
-                    <div><span>Utilities:</span> $<span id="oldUtilCostDisplay">0.00</span></div>
-                    <div><span>Recipe:</span> $<span id="oldChemCostDisplay">0.00</span></div>
+                    <div><span class="cb-label">Utilities:</span> <span class="cb-val">$<span id="oldUtilCostDisplay">0.00</span></span></div>
+                    <div><span class="cb-label">Recipe:</span> <span class="cb-val">$<span id="oldChemCostDisplay">0.00</span></span></div>
                 </div>
                 
                 <div class="per-kg-display">$<span id="oldPerKg">0.00</span> / kg of fabric</div>
@@ -501,8 +501,8 @@
                 <div style="font-size: 14px; font-weight: bold; color: #555;">Total Batch Cost</div>
                 
                 <div class="cost-breakdown">
-                    <div><span>Utilities:</span> $<span id="newUtilCostDisplay">0.00</span></div>
-                    <div><span>Recipe:</span> $<span id="newChemCostDisplay">0.00</span></div>
+                    <div><span class="cb-label">Utilities:</span> <span class="cb-val">$<span id="newUtilCostDisplay">0.00</span></span></div>
+                    <div><span class="cb-label">Recipe:</span> <span class="cb-val">$<span id="newChemCostDisplay">0.00</span></span></div>
                 </div>
 
                 <div class="per-kg-display">$<span id="newPerKg">0.00</span> / kg of fabric</div>
